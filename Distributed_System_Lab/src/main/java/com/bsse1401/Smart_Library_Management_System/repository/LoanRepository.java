@@ -1,0 +1,15 @@
+package com.bsse1401.Smart_Library_Management_System.repository;
+
+import com.bsse1401.Smart_Library_Management_System.model.Loan;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+public interface LoanRepository extends JpaRepository<Loan, Long> {
+    Optional<Loan> findById(Long loanId);
+    List<Loan> findByUserId(Long userId);
+    List<Loan> findByDueDateBeforeAndStatus(LocalDateTime now, Loan.Status status);
+}
+
