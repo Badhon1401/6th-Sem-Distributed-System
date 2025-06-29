@@ -1,0 +1,97 @@
+services:
+  # Nginx Load Balancer
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - user-service
+      - book-service
+      - loan-service
+      - stats-service
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    build:
+      context: ./User_Service/Smart_Library_Management_System  # Updated path
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${USER_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8081
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Book Service
+  book-service:
+    build:
+      context: ./Book_Service/Smart_Library_Management_System  # Updated path
+      dockerfile: Dockerfile
+    container_name: book-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${BOOK_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8082
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Loan Service
+  loan-service:
+    build:
+      context: ./Loan_Service/Smart_Library_Management_System  # Updated path
+      dockerfile: Dockerfile
+    container_name: loan-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${LOAN_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8083
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Stats Service
+  stats-service:
+    build:
+      context: ./Stats_Service/Smart_Library_Management_System  # Updated path
+      dockerfile: Dockerfile
+    container_name: stats-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${STATS_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8084
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

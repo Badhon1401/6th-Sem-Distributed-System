@@ -22,18 +22,13 @@ public class StatsService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${user.service.url}")
-    private String userServiceUrl;
+    @Value("${nginx.server.url}")
+    private String nginxServerUrl;
 
-    @Value("${book.service.url}")
-    private String bookServiceUrl;
-
-    @Value("${loan.service.url}")
-    private String loanServiceUrl;
 
     public List<PopularBookStats> getPopularBooks() {
         ResponseEntity<List<Loan>> loanResponse = restTemplate.exchange(
-                loanServiceUrl + "/api/loan_service/loans/all",
+                nginxServerUrl + "/api/loan_service/loans/all",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Loan>>() {}
@@ -42,7 +37,7 @@ public class StatsService {
         if (loans == null || loans.isEmpty()) return Collections.emptyList();
 
         ResponseEntity<List<Book>> bookResponse = restTemplate.exchange(
-                bookServiceUrl + "/api/book_service/books/all",
+                nginxServerUrl + "/api/book_service/books/all",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Book>>() {}
@@ -74,7 +69,7 @@ public class StatsService {
 
     public List<ActiveUserStats> getActiveUsers() {
         ResponseEntity<List<Loan>> loanResponse = restTemplate.exchange(
-                loanServiceUrl + "/api/loan_service/loans/all",
+                nginxServerUrl + "/api/loan_service/loans/all",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Loan>>() {}
@@ -83,7 +78,7 @@ public class StatsService {
         if (loans == null || loans.isEmpty()) return Collections.emptyList();
 
         ResponseEntity<List<User>> userResponse = restTemplate.exchange(
-                userServiceUrl + "/api/user_service/users/all",
+                nginxServerUrl + "/api/user_service/users/all",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<User>>() {}
@@ -121,7 +116,7 @@ public class StatsService {
         OverviewStats stats = new OverviewStats();
 
         ResponseEntity<List<Loan>> response = restTemplate.exchange(
-                loanServiceUrl + "/api/loan_service/loans/all",
+                nginxServerUrl + "/api/loan_service/loans/all",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Loan>>() {}
@@ -130,11 +125,11 @@ public class StatsService {
         List<Loan> allLoans = response.getBody();
         if (allLoans == null) allLoans = Collections.emptyList();
 
-        stats.setTotalBooks(restTemplate.getForObject(bookServiceUrl + "/api/book_service/books/count", Long.class));
-        stats.setTotalUsers(restTemplate.getForObject(userServiceUrl + "/api/user_service/users/count", Long.class));
+        stats.setTotalBooks(restTemplate.getForObject(nginxServerUrl + "/api/book_service/books/count", Long.class));
+        stats.setTotalUsers(restTemplate.getForObject(nginxServerUrl + "/api/user_service/users/count", Long.class));
 
         List<Book> books = restTemplate.exchange(
-                bookServiceUrl + "/api/book_service/books/all",
+                nginxServerUrl + "/api/book_service/books/all",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Book>>() {}

@@ -21,15 +21,14 @@ public class LoanService {
     private final LoanRepository loanRepo;
     private final RestTemplate restTemplate;
 
-    @Value("${user.service.url}")
-    private String userServiceUrl;
+    @Value("${nginx.server.url}")
+    private String nginxServerUrl;
 
-    @Value("${book.service.url}")
-    private String bookServiceUrl;
+
 
     public Loan issueBook(Long userId, Long bookId, LocalDateTime dueDate) {
-        User user = restTemplate.getForObject(userServiceUrl + "/api/user_service/users/" + userId, User.class);
-        Book book = restTemplate.getForObject(bookServiceUrl + "/api/book_service/books/" + bookId, Book.class);
+        User user = restTemplate.getForObject(nginxServerUrl + "/api/user_service/users/" + userId, User.class);
+        Book book = restTemplate.getForObject(nginxServerUrl + "/api/book_service/books/" + bookId, Book.class);
 
         if (book == null || user == null) {
             throw new IllegalArgumentException("Invalid user or book ID");
@@ -44,7 +43,7 @@ public class LoanService {
         updateRequest.setCopies(book.getCopies());
         updateRequest.setAvailableCopies(book.getAvailableCopies() - 1);
 
-        restTemplate.put(bookServiceUrl + "/api/book_service/books/update/" + bookId, updateRequest);
+        restTemplate.put(nginxServerUrl + "/api/book_service/books/update/" + bookId, updateRequest);
 
         Loan loan = new Loan();
         loan.setUserId(userId);
@@ -66,7 +65,7 @@ public class LoanService {
             throw new IllegalStateException("You did not perform that loan");
         }
 
-        Book book = restTemplate.getForObject(bookServiceUrl + "/api/book_service/books/" + loan.getBookId(), Book.class);
+        Book book = restTemplate.getForObject(nginxServerUrl + "/api/book_service/books/" + loan.getBookId(), Book.class);
         if (book == null) {
             throw new IllegalStateException("Book not found when returning");
         }
@@ -79,7 +78,7 @@ public class LoanService {
         updateRequest.setCopies(book.getCopies());
         updateRequest.setAvailableCopies(book.getAvailableCopies() + 1);
 
-        restTemplate.put(bookServiceUrl + "/api/book_service/books/update/" + book.getBookId(), updateRequest);
+        restTemplate.put(nginxServerUrl + "/api/book_service/books/update/" + book.getBookId(), updateRequest);
 
         return loanRepo.save(loan);
     }
