@@ -19,7 +19,7 @@ services:
   # User Service
   user-service:
     build:
-      context: ./User_Service/Smart_Library_Management_System  # Updated path
+      context: ./User_Service/Smart_Library_Management_System
       dockerfile: Dockerfile
     container_name: user-service
     ports:

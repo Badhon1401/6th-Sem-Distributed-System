@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-library_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-librarypass123}
+      - POSTGRES_DB=${POSTGRES_DB:-library_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - library-network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # User Service
+  user-service:
+    image: library-user-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${USER_DB_URL:-jdbc:postgresql://postgres-db:5432/library_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-library_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-librarypass123}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8081
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    networks:
+      - library-network
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+  # Book Service
+  book-service:
+    image: library-book-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${BOOK_DB_URL:-jdbc:postgresql://postgres-db:5432/library_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-library_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-librarypass123}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8082
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    networks:
+      - library-network
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+  # Loan Service
+  loan-service:
+    image: library-loan-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${LOAN_DB_URL:-jdbc:postgresql://postgres-db:5432/library_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-library_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-librarypass123}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8083
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    networks:
+      - library-network
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+  # Stats Service
+  stats-service:
+    image: library-stats-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=${STATS_DB_URL:-jdbc:postgresql://postgres-db:5432/library_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-library_user}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-librarypass123}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - NGINX_SERVER_URL=http://nginx
+      - SERVER_PORT=8084
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    networks:
+      - library-network
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+  # Nginx Load Balancer
+  nginx:
+    image: library-nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - library-network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+networks:
+  library-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  postgres_data:
+    driver: local
